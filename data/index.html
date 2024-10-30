@@ -1,0 +1,59 @@
+<!DOCTYPE html> 
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="author" content="Hans Weda">
+  <meta name="description" content="ESP8266 Remote controlled clock with bell">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <title>Belklok</title>
+  <link rel="icon" type="image/x-icon" href="favicon.png">
+  <link rel="stylesheet" type='text/css' href="index.css">
+  <script src="index.js"></script>
+</head>
+<body>
+  <h1>ESP8266 Belklok</h1>
+  <h3>Using Station (STA) Mode</h3>
+
+  <div>%MotorStatus%</div>
+
+  <!-- Motor switch -->
+  <div>
+    <p>Motor:</p>
+    %MotorCheckboxPlaceholder%
+  </div>
+  
+  <!-- Alarm switch -->
+  <div>
+    <p>Alarm:</p>
+    %AlarmCheckboxPlaceholder%
+  </div>
+  
+  <!-- Trigger/open the modal -->
+  <button id='set_time'>Set Time</button>
+  
+  <!-- The modal -->
+  <div id='set_time_modal' class='modal'>
+    <div class='modal-content'>
+      <span class='close'>&times;</span>
+      <form id="time_form">
+        <label for="time">Alarm time:</label><br>
+        <input type="time" id="time" name="time" value=%AlarmTime%>
+      </form>
+      <button id='submit_time'>Submit time</button>
+    </div>
+  </div>
+  
+  <p>Alarm time:</p>
+  <div id='alarm_time'>%AlarmTime%</div>
+  
+  <p>Remaining time [sec]:</p>
+  <div id='remaining_time'></div>
+  
+  <p>Current time:</p>
+  <div id='current_time'></div>
+  
+</body>
+
+</html>
