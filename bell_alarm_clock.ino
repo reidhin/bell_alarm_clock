@@ -179,6 +179,9 @@ status current_motor_status = STOPPED;
 // initialize hourly strike
 bool hourlyStrikeButtonOn = true;
 
+// initialize number of strikes
+int numberOfStrikes = 3;
+
 // ----------------------------------------------------------------------------
 // LittleFS initialization
 // ----------------------------------------------------------------------------
@@ -465,11 +468,32 @@ void loop() {
   // check if hourly strike is triggered every 1 seconds
   if (hourlyStrikeButtonOn && !(millis() % 1000)) {
     // hourly strike button is on
-    if (tm.tm_sec < 1) {
-      // every 30 minutes
-      if (bell_motor.motorStatus != STRIKING) {
-        bell_motor.motorStatus = START_STRIKING;
+    if (!(tm.tm_min % 30) && (numberOfStrikes == 0)) {
+      // striking is due - find out how many strikes
+      if (!(tm.tm_min % 60)) {
+        // full hour - assign number of hours
+        if (tm.tm_hour % 12) {
+          numberOfStrikes = tm.tm_hour % 12;
+        } else {
+          numberOfStrikes = 12;
+        }
+      } else {
+        // half hour - assign one
+        numberOfStrikes = 1;
       }
     }
+  } 
+
+  // check if we need to strike
+  if (numberOfStrikes > 0) {
+    if (bell_motor.motorStatus == STOPPED) {
+      bell_motor.motorStatus = START_STRIKING;
+      numberOfStrikes -= 1;
+    }
+    if (bell_motor.motorStatus == RUNNING || bell_motor.motorStatus == START_RUNNING) {
+      // an alarm is apparently triggered - no need for striking
+      numberOfStrikes = 0;
+    } 
   }
+
 }
