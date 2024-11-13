@@ -60,7 +60,7 @@
 // ----------------------------------------------------------------------------
 
 const int stepsPerRevolution = 2048;  // change this to fit the number of steps per revolution
-enum status{STOPPED, RUNNING, STOPPING};
+enum status{STOPPED, START_RUNNING, RUNNING, START_STRIKING, STRIKING, STOPPING}; // status of the motor driving the bell
 
 // ----------------------------------------------------------------------------
 // Definition of the Led component
@@ -94,7 +94,6 @@ struct Alarm {
 
 struct Motor {
   // state variables
-  bool motorButtonOn;
   status motorStatus;
   AccelStepper stepper;
 
@@ -113,16 +112,19 @@ struct Motor {
 
   void update() {
     // update of status
-    if (motorButtonOn) {
-      if (motorStatus != RUNNING) {
-        stepper.moveTo(200);
-        motorStatus = RUNNING;
-        Serial.println("Start running");
-      }
-    } else {
-      if (motorStatus == RUNNING) {
+    if (motorStatus == START_RUNNING) {
+      stepper.moveTo(200);
+      motorStatus = RUNNING;
+      Serial.println("Start running");
+    }
+    if (motorStatus == START_STRIKING) {
+      stepper.moveTo(250);
+      motorStatus = STRIKING;
+      Serial.println("Start striking");
+    }
+    if (motorStatus == STOPPING) {
+      if (stepper.targetPosition() != 0) {
         stepper.moveTo(0);
-        motorStatus = STOPPING;
         Serial.println("Start stopping");
       }
     }
@@ -137,6 +139,10 @@ struct Motor {
         if (motorStatus == RUNNING) {
           stepper.moveTo(-stepper.currentPosition());
           Serial.println("Changing direction");
+        }
+        if (motorStatus == STRIKING) {
+          motorStatus = STOPPING;
+          Serial.println("Striked");
         }
       }
       stepper.run();
@@ -166,9 +172,12 @@ Alarm alarm = { false, "" };
 AccelStepper stepper(AccelStepper::HALF4WIRE, IN1, IN3, IN2, IN4);
 
 // initialize motor
-Motor bell_motor = { false, STOPPED, stepper};
+Motor bell_motor = {STOPPED, stepper};
 
 status current_motor_status = STOPPED;
+
+// initialize hourly strike
+bool hourlyStrikeButtonOn = true;
 
 // ----------------------------------------------------------------------------
 // LittleFS initialization
@@ -212,10 +221,19 @@ void initWiFi() {
 String processor(const String &var) {
   if (var == "MotorCheckboxPlaceholder") {
     String html_out = "";
-    if (bell_motor.motorButtonOn) {
-      html_out += "<label class='switch'><input type='checkbox' id='motor' checked><span class='slider round'></span></label>";
-    } else {
+    if (bell_motor.motorStatus == STOPPED || bell_motor.motorStatus == STOPPING) {
       html_out += "<label class='switch'><input type='checkbox' id='motor'><span class='slider round'></span></label>";
+    } else {
+      html_out += "<label class='switch'><input type='checkbox' id='motor' checked><span class='slider round'></span></label>";
+    }
+    return html_out;
+  };
+  if (var == "UurslagCheckboxPlaceholder") {
+    String html_out = "";
+    if (hourlyStrikeButtonOn) {
+      html_out += "<label class='switch'><input type='checkbox' id='hourly_strike' checked><span class='slider round'></span></label>";
+    } else {
+      html_out += "<label class='switch'><input type='checkbox' id='hourly_strike'><span class='slider round'></span></label>";
     }
     return html_out;
   };
@@ -236,6 +254,7 @@ String processor(const String &var) {
       case RUNNING: return "<i class='fa fa-bell running_bell' id='bell'></i>"; break;
       case STOPPING: return "<i class='fa fa-bell stopping_bell' id='bell'></i>"; break;
       case STOPPED: return "<i class='fa fa-bell stopped_bell' id='bell'></i>"; break;
+      case STRIKING: return "<i class='fa fa-bell striking_bell' id='bell'></i>"; break;
     }
   }
   return String();
@@ -260,7 +279,7 @@ void initWebServer() {
 void notifyClients() {
   JsonDocument json;
   json["motorStatus"] = bell_motor.motorStatus;
-  json["motorButtonOn"] = bell_motor.motorButtonOn;
+  json["hourlyStrikeButtonOn"] = hourlyStrikeButtonOn;
   json["alarmButtonOn"] = alarm.alarmButtonOn;
   json["alarmTime"] = alarm.alarmTime.c_str();
   
@@ -281,8 +300,9 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       return;
     }
 
-    bell_motor.motorButtonOn = json["motorButtonOn"];
+    bell_motor.motorStatus = json["motorStatus"];
     alarm.alarmButtonOn = json["alarmButtonOn"];
+    hourlyStrikeButtonOn = json["hourlyStrikeButtonOn"];
     alarm.alarmTime = json["alarmTime"].as<String>();
 
     notifyClients();
@@ -427,17 +447,29 @@ void loop() {
 
   // check if alarm is triggered every 1 seconds
   if (alarm.alarmButtonOn && !(millis() % 1000)) {
-    // alarm is on
+    // alarm-button is on
     if (alarm.alarmTime.substring(0, 2).toInt() == tm.tm_hour) {
       // same hour
       if (alarm.alarmTime.substring(3).toInt() == tm.tm_min) {
         // same minute
         if (tm.tm_sec < 3) {
           // turn motor on (only in first three seconds)
-          bell_motor.motorButtonOn = true;
+          if (bell_motor.motorStatus != RUNNING) {
+            bell_motor.motorStatus = START_RUNNING;
+          }
         }
       }
     }
   }
-
+  
+  // check if hourly strike is triggered every 1 seconds
+  if (hourlyStrikeButtonOn && !(millis() % 1000)) {
+    // hourly strike button is on
+    if (tm.tm_sec < 1) {
+      // every 30 minutes
+      if (bell_motor.motorStatus != STRIKING) {
+        bell_motor.motorStatus = START_STRIKING;
+      }
+    }
+  }
 }

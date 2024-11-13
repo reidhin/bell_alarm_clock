@@ -167,6 +167,11 @@ input:checked + .slider:before {
   color: black;
 }
 
+.striking_bell {
+  color: blue;
+  animation: ring 1s linear infinite;
+}
+
 @keyframes ring { 
   0% {transform:rotate(0deg); } 
   25% {transform:rotate(60deg); } 
