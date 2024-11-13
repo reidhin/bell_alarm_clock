@@ -177,10 +177,10 @@ Motor bell_motor = {STOPPED, stepper};
 status current_motor_status = STOPPED;
 
 // initialize hourly strike
-bool hourlyStrikeButtonOn = true;
+bool hourlyStrikeButtonOn = false;
 
 // initialize number of strikes
-int numberOfStrikes = 3;
+int numberOfStrikes = 0;
 
 // ----------------------------------------------------------------------------
 // LittleFS initialization
@@ -468,7 +468,7 @@ void loop() {
   // check if hourly strike is triggered every 1 seconds
   if (hourlyStrikeButtonOn && !(millis() % 1000)) {
     // hourly strike button is on
-    if (!(tm.tm_min % 30) && (numberOfStrikes == 0)) {
+    if (!(tm.tm_min % 30) && (numberOfStrikes == 0) && (tm.tm_sec < 2)) {
       // striking is due - find out how many strikes
       if (!(tm.tm_min % 60)) {
         // full hour - assign number of hours

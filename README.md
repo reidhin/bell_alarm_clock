@@ -15,17 +15,65 @@ This repository contains the code for an alarm clock with bell and display.
 
 TODO
 
-## Code
-
-TODO
-
 ## Instructions
 
-LittleFS data upload - serial monitor should be closed - try to restart ide in case of errors
-[Ctrl] + [Shift] + [P], then "Upload LittleFS to Pico/ESP8266/ESP32".
+The codes tries to connect to the local Wifi network using the credentials listed in `arduino_secrets.h`. 
+This file is not added to the repository; an example on how to structure this file can be seen in `arduino_secrets_example.h`.
+The Wifi connection is needed for two reasons:
+1. To obtain the internet time;
+2. To set different parameters of the alarm clock using a web interface such as the alarm time and turn on/off the hourly strike.
 
+## Code
+
+The code has been split into many (small) functions and classes, inspired by https://m1cr0lab-esp32.github.io/remote-control-with-websocket/.
+
+The files needed for the web interface are stored in a separe folder: `data`. This folder contains a `html`, `css`, and javascript file.
+The folder is uploaded to ESP8266 using LittleFS. Use `[Ctrl] + [Shift] + [P]`, then "Upload LittleFS to Pico/ESP8266/ESP32" to upload the folder.
+Please note that the serial monitor should be closed during upload- try to restart the Arduino IDE in case of errors.
+Details on the use of LittleFS can be found here: https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/
+
+The code uses `AsyncWebServer` which allows serving multiple clients at the same time.
+The clients are kept upto date on the states of the clock using websockets. 
+The setup of the websockets is heavily inspired by https://m1cr0lab-esp32.github.io/remote-control-with-websocket/.
+The creation and reading of json is updated to the more modern `(de)serializeJson()'.
+
+The onboard led is used for a bit of signaling when the LittleFS file system is not mounted correctly at start-up.
+During normal runtime, the onboard led turns on/off every 1 second (0.5Hz).
+
+The initialization and usage of the OLED display is based upon https://randomnerdtutorials.com/esp8266-0-96-inch-oled-display-with-arduino-ide/.
+
+The initialization and usage of the stepper motor is based upon https://randomnerdtutorials.com/esp8266-nodemcu-stepper-motor-28byj-48-uln2003/.
+
+## To do
+
+I may want to implement:
+- showing the motor status as text on the webinterface;
+- provide a (large) turn-off button when the alarm bell is ringing;
+- provide a picture/video showing the clock;
 
 ## References
 
 - Tutorial on websockets: https://m1cr0lab-esp32.github.io/remote-control-with-websocket/
 - Countless tutorials on: https://randomnerdtutorials.com/projects-esp8266/
+
+## Project structure
+
+```
+├── arduino_secrets_example.h     <- example on how to structure arduino_secrets.h
+├── arduino_secrets.h             <- file containin Wifi credentials
+├── bell_alarm_clock.ino          <- Main arduino code
+├── data
+│   ├── favicon.png               <- image with favicon
+│   ├── index.css                 <- css file to style the html webinterface
+│   ├── index.html                <- html file for the webinterface
+│   └── index.js                  <- javascript handling the button clicks 
+├── LICENSE.md                    <- License
+└── README.md                     <- readme file with explanation on this package
+```
+
+## License
+
+<a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">
+<img alt="Creative Commons-Licentie" style="border-width:0" src="https://licensebuttons.net/l/publicdomain/88x31.png" />
+</a>
+<br />Dit werk valt onder een <a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">Creative Commons Naamsvermelding-NietCommercieel-GelijkDelen 4.0 Internationaal-licentie</a>.
