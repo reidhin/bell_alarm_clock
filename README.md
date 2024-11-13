@@ -76,4 +76,4 @@ I may want to implement:
 <a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">
 <img alt="Creative Commons-Licentie" style="border-width:0" src="https://licensebuttons.net/l/publicdomain/88x31.png" />
 </a>
-<br />Dit werk valt onder een <a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">Creative Commons Naamsvermelding-NietCommercieel-GelijkDelen 4.0 Internationaal-licentie</a>.
+<br />This work is subject to <a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">Creative Commons CC0 1.0 Universal</a>.
