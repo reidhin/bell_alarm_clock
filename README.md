@@ -51,6 +51,33 @@ I may want to implement:
 - provide a (large) turn-off button when the alarm bell is ringing;
 - provide a picture/video showing the clock;
 
+*Question:*
+A processor function is used to process the index.html file when it is sent to the client. 
+In this way a new client gets directly the latest updated status of the led in the html-file.
+
+In this tutorial, https://randomnerdtutorials.com/stepper-motor-esp8266-websocket/, they seem to take a different approach. 
+When a new client connects, they initiate a notifyClients command to notify (all) clients of the latest state. 
+See code snippet below:
+
+```
+void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+  switch (type) {
+    case WS_EVT_CONNECT:
+      Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      //Notify client of motor current state when it first connects
+      notifyClients(direction);
+      break;
+    case WS_EVT_DISCONNECT:
+      Serial.printf("WebSocket client #%u disconnected\n", client->id());
+      break;
+```
+
+I would say that the advantage of the notifyClients approach is that you do not have to write a (possibly lengthy) processor function. 
+The downside is that you also notify clients that are already connected; so in this approach you are creating unnecessary network traffic.
+
+What are your thoughts on the notifyClients approach?
+
+
 ## References
 
 - Tutorial on websockets: https://m1cr0lab-esp32.github.io/remote-control-with-websocket/
