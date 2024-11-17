@@ -1,6 +1,8 @@
 # bell_alarm_clock
 
 This repository contains the code for an alarm clock with bell and display.
+![image](https://github.com/user-attachments/assets/f2f777a9-5c89-449f-b2ae-5201891aa6e8)
+
 
 ## Ingredients
 
