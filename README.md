@@ -13,7 +13,7 @@ This repository contains the code for an alarm clock with bell and display.
 
 ## Wiring
 
-TODO
+![schema](https://github.com/user-attachments/assets/d0077fc9-9654-46ff-9b7e-0c5ffb9738fb)
 
 ## Instructions
 
