@@ -46,22 +46,30 @@ function onClose(event) {
 
 function onMessage(event) {
   let data = JSON.parse(event.data);
-  document.getElementById('motor').checked = data.motorButtonOn;
+  document.getElementById('motor').checked = (data.motorStatus == 2 || data.motorStatus == 4);
+  document.getElementById('hourly_strike').checked = data.hourlyStrikeButtonOn;
   document.getElementById('alarm').checked = data.alarmButtonOn;
   document.getElementById('alarm_time').innerHTML = data.alarmTime;
   document.getElementById('time').value = data.alarmTime;
+  // possible values motorStatus
+  // STOPPED, START_RUNNING, RUNNING, START_STRIKING, STRIKING, STOPPING
+  // 0, 1, 2, 3, 4, 5
   switch(data.motorStatus) {
     case 0: 
-      document.getElementById("bell").classList.remove("running_bell", "stopping_bell"); 
+      document.getElementById("bell").classList.remove("running_bell", "stopping_bell", "striking_bell"); 
       document.getElementById("bell").classList.add("stopped_bell"); 
       break;
-    case 1: 
-      document.getElementById("bell").classList.remove("stopping_bell", "stopped_bell"); 
+    case 2: 
+      document.getElementById("bell").classList.remove("stopping_bell", "stopped_bell", "striking_bell"); 
       document.getElementById("bell").classList.add("running_bell"); 
       break;
-    case 2: 
-      document.getElementById("bell").classList.remove("running_bell", "stopped_bell"); 
+    case 5: 
+      document.getElementById("bell").classList.remove("running_bell", "stopped_bell", "striking_bell"); 
       document.getElementById("bell").classList.add("stopping_bell"); 
+      break;
+    case 4: 
+      document.getElementById("bell").classList.remove("running_bell", "stopped_bell", "stopping_bell"); 
+      document.getElementById("bell").classList.add("striking_bell"); 
       break;
   };
 }
@@ -74,6 +82,8 @@ function onMessage(event) {
 function initButtons() {
   // Motor button
   document.getElementById('motor').addEventListener('click', submitData);
+  // Hourly strike on/off Button
+  document.getElementById('hourly_strike').addEventListener('click', submitData);
   // Alarm Button
   document.getElementById('alarm').addEventListener('click', submitData);
   // Open modal
@@ -90,7 +100,8 @@ function initButtons() {
 function submitData(event) {
   websocket.send(
     JSON.stringify({
-      'motorButtonOn': document.getElementById('motor').checked,
+      'motorStatus': (document.getElementById('motor').checked) ? 1 : ( (document.getElementById("bell").classList.contains("stopped_bell")) ? 0 : 5),
+      'hourlyStrikeButtonOn': document.getElementById('hourly_strike').checked,
       'alarmButtonOn': document.getElementById('alarm').checked,
       'alarmTime': document.getElementById('time').value
     })
