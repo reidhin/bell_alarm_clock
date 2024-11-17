@@ -1,2 +1,8 @@
+# secrets
 arduino_secrets.h
-schema.odp
+
+# images
+*.odp
+*.odp#
+*.jpg
+*.png
