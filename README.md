@@ -51,6 +51,7 @@ I may want to implement:
 - showing the motor status as text on the webinterface;
 - provide a (large) turn-off button when the alarm bell is ringing;
 - provide a picture/video showing the clock;
+- dim the onboard LED
 
 *Question:*
 A processor function is used to process the index.html file when it is sent to the client. 

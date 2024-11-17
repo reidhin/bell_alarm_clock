@@ -177,10 +177,13 @@ Motor bell_motor = {STOPPED, stepper};
 status current_motor_status = STOPPED;
 
 // initialize hourly strike
-bool hourlyStrikeButtonOn = false;
+bool hourlyStrikeButtonOn = true;
 
 // initialize number of strikes
 int numberOfStrikes = 0;
+
+// previous minute
+int previous_tm_min = 0;
 
 // ----------------------------------------------------------------------------
 // LittleFS initialization
@@ -430,7 +433,7 @@ void loop() {
   onboard_led.on = millis() % 2000 < 1000;
   onboard_led.update();
 
-  // update time
+  // update time every 2 seconds
   if (!(millis() % 2000)) {
     time(&now);                       // read the current time
     localtime_r(&now, &tm);
@@ -448,42 +451,48 @@ void loop() {
     current_motor_status = bell_motor.motorStatus;
   }
 
-  // check if alarm is triggered every 1 seconds
-  if (alarm.alarmButtonOn && !(millis() % 1000)) {
-    // alarm-button is on
-    if (alarm.alarmTime.substring(0, 2).toInt() == tm.tm_hour) {
-      // same hour
-      if (alarm.alarmTime.substring(3).toInt() == tm.tm_min) {
-        // same minute
-        if (tm.tm_sec < 3) {
-          // turn motor on (only in first three seconds)
+  // check if the minute is changed
+  if (tm.tm_min != previous_tm_min) {
+    previous_tm_min = tm.tm_min;
+    
+    // check if alarm is triggered 
+    if (alarm.alarmButtonOn) {
+      // alarm-button is on
+      if (alarm.alarmTime.substring(0, 2).toInt() == tm.tm_hour) {
+        // same hour
+        if (alarm.alarmTime.substring(3).toInt() == tm.tm_min) {
+          // same minute
+          // turn motor on
           if (bell_motor.motorStatus != RUNNING) {
             bell_motor.motorStatus = START_RUNNING;
           }
         }
       }
     }
+
+    // check if hourly strike is triggered
+    if (hourlyStrikeButtonOn) {
+      // hourly strike button is on
+      if (!(tm.tm_min % 30) && (numberOfStrikes == 0)) {
+        // striking is due - find out how many strikes
+        if (!(tm.tm_min % 60)) {
+          // full hour - assign number of hours
+          if (tm.tm_hour % 12) {
+            numberOfStrikes = tm.tm_hour % 12;
+          } else {
+            numberOfStrikes = 12;
+          }
+        } else {
+          // half hour - assign one
+          numberOfStrikes = 1;
+        }
+      }
+    } 
+
+    // end of minute change
   }
   
-  // check if hourly strike is triggered every 1 seconds
-  if (hourlyStrikeButtonOn && !(millis() % 1000)) {
-    // hourly strike button is on
-    if (!(tm.tm_min % 30) && (numberOfStrikes == 0) && (tm.tm_sec < 2)) {
-      // striking is due - find out how many strikes
-      if (!(tm.tm_min % 60)) {
-        // full hour - assign number of hours
-        if (tm.tm_hour % 12) {
-          numberOfStrikes = tm.tm_hour % 12;
-        } else {
-          numberOfStrikes = 12;
-        }
-      } else {
-        // half hour - assign one
-        numberOfStrikes = 1;
-      }
-    }
-  } 
-
+  
   // check if we need to strike
   if (numberOfStrikes > 0) {
     if (bell_motor.motorStatus == STOPPED) {
@@ -496,4 +505,5 @@ void loop() {
     } 
   }
 
+// end of loop
 }
